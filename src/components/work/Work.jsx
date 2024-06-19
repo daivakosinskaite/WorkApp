@@ -1,15 +1,16 @@
-import * as service from "../../services/WorksCrudServices"
+import * as service from "../../services/WorksCrudServices";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 
-const Work = (props)=>{
+const Work = (props) => {
     const navigate = useNavigate();
 
-    const deleteHandler = ()=>{
+    const deleteHandler = () => {
         service.deleteWork(props.id);
         navigate('/');
     }
-    return(
+
+    return (
         <tr>
             <td>{props.date}</td>
             <td>{props.company}</td>
@@ -20,7 +21,7 @@ const Work = (props)=>{
             <td><Link to={`/update/${props.id}`}>Keisti</Link></td>
             <td><a href="#" onClick={deleteHandler}>Šalinti</a></td>
         </tr>
-    )
+    );
 }
 
-export default Work
+export default Work;

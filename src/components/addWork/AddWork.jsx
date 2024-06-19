@@ -1,41 +1,57 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 import * as service from "../../services/WorksCrudServices";
-import { useNavigate, Link, useParams } from "react-router-dom";
-const AddWork = ()=>{
+import * as clientService from "../../services/ClientServices";
+import * as serviceService from "../../services/ServiceServices";
+import { useNavigate, useParams } from "react-router-dom";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "../../services/AuthServices";
+
+const AddWork = () => {
+    const [user, loading, error] = useAuthState(auth);
     const navigate = useNavigate();
-    const {id} = useParams();
+    const { id } = useParams();
+    const [clients, setClients] = useState([]);
+    const [services, setServices] = useState([]);
     const [formData, setFormData] = useState({
-        date:'',
-        company:'',
-        service:'',
-        description:'',
+        date: '',
+        company: '',
+        service: '',
+        description: '',
         from: '',
-        to:'',
+        to: '',
+        uid: ""
     });
 
-    const handleChange = (e)=>{
+    useEffect(() => {
+        clientService.getAllClients(setClients);
+        serviceService.getAllServices(setServices);
+
+        if (id) {
+            service.getWorkById((item) => setFormData(item), id);
+        }
+    }, [id]);
+
+    const handleChange = (e) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value
-        })
-    }
+        });
+    };
 
-    const submitHandler = (e)=>{
+    const submitHandler = (e) => {
         e.preventDefault();
-        if(id){
-            service.updateWork(id,formData)
-        }else{
-            service.addWork(formData)
+        if (id) {
+            service.updateWork(id, formData);
+        } else {
+            service.addWork({
+                ...formData,
+                uid: user.uid
+            });
         }
         navigate("/");
-    }
+    };
 
-    useEffect(()=>{
-        id && service.getWorkById((item)=>setFormData(item), id)   
-    },[id])
-
-    console.log('Noriu atnaujinti dokumenta, kurio id', id)
-    return(
+    return (
         <div className="card">
             <div className="card-header">
                 <h2>Pridėti atliktą darbą</h2>
@@ -48,16 +64,18 @@ const AddWork = ()=>{
                     </div>
                     <div className="mb-3">
                         <select name="company" className="form-control" onChange={handleChange} value={formData.company}>
-                        <option selected disabled>--Pasirinkite klientą--</option>
-                            <option value="kb">Kilobaitas</option>
-                            <option value="it">IT sfera</option>
+                            <option value="" disabled>--Pasirinkite klientą--</option>
+                            {clients.map((client) => (
+                                <option key={client.id} value={client.id}>{client.name}</option>
+                            ))}
                         </select>
                     </div>
                     <div className="mb-3">
                         <select name="service" className="form-control" onChange={handleChange} value={formData.service}>
-                            <option selected disabled>--Pasirinkite paslaugą--</option>
-                            <option value="dev">Development</option>
-                            <option value="ux">UX research</option>
+                            <option value="" disabled>--Pasirinkite paslaugą--</option>
+                            {services.map((service) => (
+                                <option key={service.id} value={service.id}>{service.name}</option>
+                            ))}
                         </select>
                     </div>
                     <div className="mb-3">
@@ -65,24 +83,22 @@ const AddWork = ()=>{
                     </div>
                     <div className="mb-3">
                         <label htmlFor="from">Nuo:</label>
-                        <input type="time" name="from" className="form-control" onChange={handleChange} value={formData.from}/>
+                        <input type="time" name="from" className="form-control" onChange={handleChange} value={formData.from} />
                     </div>
                     <div className="mb-3">
-                        <label htmlFor="to">To:</label>
-                        <input type="time" name="to" className="form-control" onChange={handleChange} value={formData.to}/>
+                        <label htmlFor="to">Iki:</label>
+                        <input type="time" name="to" className="form-control" onChange={handleChange} value={formData.to} />
                     </div>
                     <div className="mb-3">
-                        {(id)?
-                           <button type="submit" className="btn btn-primary">Atnaujinti</button>:
-                           <button type="submit" className="btn btn-primary">Saugoti</button> 
-                    }
-                        
+                        {id ?
+                            <button type="submit" className="btn btn-primary">Atnaujinti</button> :
+                            <button type="submit" className="btn btn-primary">Saugoti</button>
+                        }
                     </div>
                 </form>
             </div>
         </div>
-    )
-  
+    );
 }
 
-export default AddWork
+export default AddWork;
